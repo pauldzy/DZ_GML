@@ -1,5 +1,5 @@
 # DZ_GML
-Oracle PL/SQL library for the conversion of GML geometry into Oracle SDO_GEOMETRY
+PL/SQL utilities for the conversion between GML geometry and Oracle Spatial SDO geometry.
 
 ##### geogml2sdo
 ```
