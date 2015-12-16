@@ -3,7 +3,7 @@ PL/SQL utilities for the conversion between GML geometry and Oracle Spatial SDO 
 
 ##### geogml2sdo
 ```
-dz_gml_main.sdo2geogml(
+dz_gml_main.geogml2sdo(
        p_input            IN  CLOB (or XMLTYPE)
       ,p_gml_version      IN  NUMBER   DEFAULT NULL
       ,p_srid             IN  NUMBER   DEFAULT NULL
