@@ -1,5 +1,6 @@
 # DZ_GML
 PL/SQL utilities for the conversion between GML geometry and Oracle Spatial SDO geometry.
+For the most up-to-date documentation see the auto-build [dz_gml_deploy.pdf](https://github.com/pauldzy/DZ_GML/blob/master/dz_gml_deploy.pdf).
 
 ##### geogml2sdo
 ```
@@ -59,6 +60,8 @@ Notes:
 
 * This function is the flip-side of geogml2sdo and never had a production implementation in my work so its a bit of a place holder.  Ideally the logic to unpack SDO into GML would be done in PLSQL and the dependence on the SDO_UTIL utilities removed.  I just never have had the need.
 
+## Installation
 
+Simply execute the deployment script into the schema of your choice.  Then execute the code using either the same or a different schema.  All procedures and functions are publically executable and utilize AUTHID CURRENT_USER for permissions handling.
 
 
