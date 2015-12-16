@@ -1033,9 +1033,9 @@ AS
    ) RETURN MDSYS.SDO_GEOMETRY
    AS
       sdo_output         MDSYS.SDO_GEOMETRY;
-      str_id             VARCHAR2(4000);
+      str_id             VARCHAR2(4000 Char);
       num_status_code    NUMBER;
-      str_status_message VARCHAR2(4000);
+      str_status_message VARCHAR2(4000 Char);
       
    BEGIN
    
@@ -1347,7 +1347,7 @@ AS
    ) RETURN MDSYS.SDO_GEOMETRY
    AS
       sdo_output MDSYS.SDO_GEOMETRY;
-      str_id     VARCHAR2(4000);
+      str_id     VARCHAR2(4000 Char);
       
    BEGIN
       gmlpolygon2sdo(
@@ -1743,7 +1743,10 @@ AS
             p_output := sdo_temp;
             
          ELSE
-            p_output := SDO_UTIL.APPEND(p_output,sdo_temp);
+            p_output := MDSYS.SDO_UTIL.APPEND(
+                p_output
+               ,sdo_temp
+            );
             
          END IF;
                     
@@ -1762,7 +1765,7 @@ AS
    ) RETURN MDSYS.SDO_GEOMETRY
    AS
       sdo_output MDSYS.SDO_GEOMETRY;
-      str_id     VARCHAR2(4000);
+      str_id     VARCHAR2(4000 Char);
       
    BEGIN
       
@@ -1931,7 +1934,10 @@ AS
             p_output := sdo_temp;
             
          ELSE
-            p_output := SDO_UTIL.APPEND(p_output,sdo_temp);
+            p_output := MDSYS.SDO_UTIL.APPEND(
+                p_output
+               ,sdo_temp
+            );
             
          END IF;
                     
@@ -2852,7 +2858,10 @@ AS
             p_output := sdo_temp;
             
          ELSE
-            p_output := SDO_UTIL.APPEND(p_output,sdo_temp);
+            p_output := MDSYS.SDO_UTIL.APPEND(
+                p_output
+               ,sdo_temp
+            );
             
          END IF;
                     
@@ -3027,7 +3036,10 @@ AS
             p_output := sdo_temp;
             
          ELSE
-            p_output := SDO_UTIL.APPEND(p_output,sdo_temp);
+            p_output := MDSYS.SDO_UTIL.APPEND(
+                p_output
+               ,sdo_temp
+            );
             
          END IF;
                     

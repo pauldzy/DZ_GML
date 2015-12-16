@@ -690,7 +690,7 @@ AS
    ) RETURN NUMBER
    AS
       num_srid         NUMBER;
-      str_axes_latlong VARCHAR2(4000);
+      str_axes_latlong VARCHAR2(4000 Char);
       
    BEGIN
       
@@ -1326,7 +1326,7 @@ AS
    FUNCTION get_guid
    RETURN VARCHAR2
    AS
-      str_sysguid VARCHAR2(40);
+      str_sysguid VARCHAR2(40 Char);
       
    BEGIN
    

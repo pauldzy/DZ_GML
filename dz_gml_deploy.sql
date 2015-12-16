@@ -7,6 +7,7 @@ WHENEVER OSERROR  EXIT -98;
 SET DEFINE OFF;
 
 
+
 --*************************--
 PROMPT DZ_GML_ORDS_VRY.tps;
 
@@ -190,6 +191,7 @@ END dz_gml_util;
 /
 
 GRANT EXECUTE ON dz_gml_util TO PUBLIC;
+
 
 --*************************--
 PROMPT DZ_GML_UTIL.pkb;
@@ -886,7 +888,7 @@ AS
    ) RETURN NUMBER
    AS
       num_srid         NUMBER;
-      str_axes_latlong VARCHAR2(4000);
+      str_axes_latlong VARCHAR2(4000 Char);
       
    BEGIN
       
@@ -1522,7 +1524,7 @@ AS
    FUNCTION get_guid
    RETURN VARCHAR2
    AS
-      str_sysguid VARCHAR2(40);
+      str_sysguid VARCHAR2(40 Char);
       
    BEGIN
    
@@ -1539,6 +1541,8 @@ AS
    
 END dz_gml_util;
 /
+
+
 --*************************--
 PROMPT DZ_GML_MAIN.pks;
 
@@ -1550,10 +1554,10 @@ AS
    /*
    header: DZ_GML
      
-   - Build ID: 32
-   - TFS Change Set: 7112
+   - Build ID: 6
+   - TFS Change Set: 8262
    
-   Utility for the exchange of geometries between Oracle Spatial and OGC
+   Utilities for the exchange of geometries between Oracle Spatial and OGC
    GML 3.x formats.
    
    */
@@ -1562,6 +1566,46 @@ AS
    
    -----------------------------------------------------------------------------
    -----------------------------------------------------------------------------
+   /*
+   Function: dz_gml_main.sdo2geogml
+   
+   Wrapper around MDSYS.SDO_UTIL.TO_GMLGEOMETRY and 
+   MDSYS.SDO_UTIL.TO_GML311GEOMETRY for conversion of Oracle Spatial SDO_GEOMETRY 
+   into GML geospatial tags allowing GML 3.2 output and more OGC compliant 
+   srs information.
+   
+   Parameters:
+
+      p_input - input SDO_GEOMETRY. Only geometry types supported by SDO_UTIL GML 
+      packages are supported.
+      p_pretty_print - nonfunctional at this time.
+      p_2d_flag - set to TRUE to remove all 3D and LRS information from input 
+      geometry before conversion.
+      p_output_srid - set to desired output coordinate reference system. srsName 
+      will be populated as defined in dz_gml_util.srid2srs utility function.
+      p_geometry_format - hint to push logic to use TO_GMLGEOMETRY or 
+      TO_GML311GEOMETRY. Default is to assume output should be GML 3.2. The only 
+      need for this parameter is when you do really want old GML 2.0.
+      p_prune_number - nonfunctional at this time, the idea here would be to 
+      remove large amounts of precision from the source Oracle coordinate numbers.
+      p_output_srs - nonfunctional at this time, the idea would be to allow an 
+      URN as input to replace or override p_output_srid parameter.
+      p_axes_latlong - nonfunctional at this time, the idea would be to swap around 
+      the longitude for latitude in the output to match desired WFS specification.
+      p_gml_id - The gml:id value to add to GML 3.2 output. The default value is "1".      
+   
+   Returns:
+
+      CLOB text in GML format
+   
+   Notes:
+   
+    - This function is the flip-side of geogml2sdo and never had a production implementation 
+      in my work so its a bit of a place holder. Ideally the logic to unpack SDO into GML 
+      would be done in PLSQL and the dependence on the SDO_UTIL utilities removed. I just 
+      never have had the need.
+   
+   */
    FUNCTION sdo2geogml(
        p_input            IN  MDSYS.SDO_GEOMETRY
       ,p_pretty_print     IN  NUMBER   DEFAULT 0
@@ -1576,6 +1620,32 @@ AS
    
    -----------------------------------------------------------------------------
    -----------------------------------------------------------------------------
+   /*
+   Function: dz_gml_main.fetch_gml_namespace
+   
+   Direct exposure of the GML version number to namespace utility to test if your 
+   gml version is supported as you expect by the DZ_GML package.  
+   To verify, execute "SELECT dz_gml_main.fetch_gml_namespace(3.2) FROM dual;"
+   Replace 3.2 with the version of GML you wish to test is supported.
+   
+   Parameters:
+      p_input - GML version desired for conversion
+      
+   Returns:
+      
+      GML namespace text value
+      
+   Notes:
+   
+    - Fairly simple logic currently, if less than 3.2 then 
+      xmlns:gml="http://www.opengis.net/gml"
+      if more than 3.2 and less than 3.3 then
+      xmlns:gml="http://www.opengis.net/gml/3.2"
+      if more than 3.3 and less than 3.4 then
+      xmlns:gml="http://www.opengis.net/gml/3.3"
+      else err
+   
+   */
    FUNCTION fetch_gml_namespace(
       p_input           IN  NUMBER
    ) RETURN VARCHAR2; 
@@ -1594,18 +1664,6 @@ AS
       ,p_status_message   OUT VARCHAR2
    );
    
-   -----------------------------------------------------------------------------
-   -----------------------------------------------------------------------------
-   FUNCTION geogml2sdo(
-       p_input            IN  SYS.XMLTYPE
-      ,p_gml_version      IN  NUMBER   DEFAULT NULL
-      ,p_srid             IN  NUMBER   DEFAULT NULL
-      ,p_num_dims         IN  NUMBER   DEFAULT NULL
-      ,p_axes_latlong     IN  VARCHAR2 DEFAULT NULL
-   ) RETURN MDSYS.SDO_GEOMETRY;
-   
-   -----------------------------------------------------------------------------
-   -----------------------------------------------------------------------------
    PROCEDURE geogml2sdo(
        p_input            IN  CLOB
       ,p_gml_version      IN  NUMBER   DEFAULT NULL
@@ -1620,6 +1678,54 @@ AS
    
    -----------------------------------------------------------------------------
    -----------------------------------------------------------------------------
+   /*
+   Function: dz_gml_main.geogml2sdo
+   
+   Function for conversion of GML geospatial tags into Oracle Spatial SDO_GEOMETRY
+   geometry objects.  This utility does not utilize the java SDO_UTIL.FROM_GMLGEOMETRY 
+   or SDO_UTIL.FROM_GML311GEOMETRY utilities in any fashion.  Being a pure PL/SQL
+   conversion allows more flexibility in the interpretation of more modern forms of 
+   GML.
+   
+   Parameters:
+
+      p_input - input GML geometry as SYS.XMLTYPE or CLOB. All input must be 
+      able to be parsed as Oracle SYS.XMLTYPE so users are encouraged to do that 
+      step themselves to avoid issues. The XML snippet should be presented as the 
+      geometry alone, without any parent tags - the same as 
+      SDO_UTIL.FROM_GMLGEOMETRY and SDO_UTIL.FROM_GML311GEOMETRY expect.
+      p_gml_version - nonfunctional at this time.  The parameter was intended as
+      a hint when parsing GML when the version is unclear. May still be needed in 
+      the future.
+      p_srid - override for output SDO_SRID value. The srid is normally extracted 
+      from the srsName on the GML object. Use this parameter to force to a given 
+      value and skip the logic to search for the value.
+      p_num_dims - the number of dimensions is required to properly unpack GML 
+      coordinates. This value is normally provided in the srsDimension attribute. 
+      Set this parameter to force to a given number and skip the logic to search 
+      for the value. Setting this to 2 when you know you just have 2D geometries 
+      will provide a modest performance boost.
+      p_axes_latlong - Set to TRUE if your input GML has longitude and latitude 
+      reversed (e.g. WFS 1.1 and 2.0).
+   
+   Returns:
+
+      CLOB text in WKT or EWKT format
+   
+   Notes:
+   
+    - For more control over conversion attempts which generate specific errors
+      utilize the procedure versions which return an error code and status message.  
+   
+   */
+   FUNCTION geogml2sdo(
+       p_input            IN  SYS.XMLTYPE
+      ,p_gml_version      IN  NUMBER   DEFAULT NULL
+      ,p_srid             IN  NUMBER   DEFAULT NULL
+      ,p_num_dims         IN  NUMBER   DEFAULT NULL
+      ,p_axes_latlong     IN  VARCHAR2 DEFAULT NULL
+   ) RETURN MDSYS.SDO_GEOMETRY;
+   
    FUNCTION geogml2sdo(
        p_input            IN  CLOB
       ,p_gml_version      IN  NUMBER   DEFAULT NULL
@@ -1808,6 +1914,7 @@ END dz_gml_main;
 /
 
 GRANT EXECUTE ON dz_gml_main TO PUBLIC;
+
 
 --*************************--
 PROMPT DZ_GML_MAIN.pkb;
@@ -2847,9 +2954,9 @@ AS
    ) RETURN MDSYS.SDO_GEOMETRY
    AS
       sdo_output         MDSYS.SDO_GEOMETRY;
-      str_id             VARCHAR2(4000);
+      str_id             VARCHAR2(4000 Char);
       num_status_code    NUMBER;
-      str_status_message VARCHAR2(4000);
+      str_status_message VARCHAR2(4000 Char);
       
    BEGIN
    
@@ -3161,7 +3268,7 @@ AS
    ) RETURN MDSYS.SDO_GEOMETRY
    AS
       sdo_output MDSYS.SDO_GEOMETRY;
-      str_id     VARCHAR2(4000);
+      str_id     VARCHAR2(4000 Char);
       
    BEGIN
       gmlpolygon2sdo(
@@ -3557,7 +3664,10 @@ AS
             p_output := sdo_temp;
             
          ELSE
-            p_output := SDO_UTIL.APPEND(p_output,sdo_temp);
+            p_output := MDSYS.SDO_UTIL.APPEND(
+                p_output
+               ,sdo_temp
+            );
             
          END IF;
                     
@@ -3576,7 +3686,7 @@ AS
    ) RETURN MDSYS.SDO_GEOMETRY
    AS
       sdo_output MDSYS.SDO_GEOMETRY;
-      str_id     VARCHAR2(4000);
+      str_id     VARCHAR2(4000 Char);
       
    BEGIN
       
@@ -3745,7 +3855,10 @@ AS
             p_output := sdo_temp;
             
          ELSE
-            p_output := SDO_UTIL.APPEND(p_output,sdo_temp);
+            p_output := MDSYS.SDO_UTIL.APPEND(
+                p_output
+               ,sdo_temp
+            );
             
          END IF;
                     
@@ -4666,7 +4779,10 @@ AS
             p_output := sdo_temp;
             
          ELSE
-            p_output := SDO_UTIL.APPEND(p_output,sdo_temp);
+            p_output := MDSYS.SDO_UTIL.APPEND(
+                p_output
+               ,sdo_temp
+            );
             
          END IF;
                     
@@ -4841,7 +4957,10 @@ AS
             p_output := sdo_temp;
             
          ELSE
-            p_output := SDO_UTIL.APPEND(p_output,sdo_temp);
+            p_output := MDSYS.SDO_UTIL.APPEND(
+                p_output
+               ,sdo_temp
+            );
             
          END IF;
                     
@@ -4879,17 +4998,19 @@ AS
    
 END dz_gml_main;
 /
+
+
 --*************************--
 PROMPT DZ_GML_TEST.pks;
 
 CREATE OR REPLACE PACKAGE dz_gml_test
-AUTHID DEFINER
+AUTHID CURRENT_USER
 AS
 
-   C_TFS_CHANGESET CONSTANT NUMBER := 7112;
-   C_JENKINS_JOBNM CONSTANT VARCHAR2(255) := 'BUILD-DZ_GML';
-   C_JENKINS_BUILD CONSTANT NUMBER := 32;
-   C_JENKINS_BLDID CONSTANT VARCHAR2(255) := '32';
+   C_TFS_CHANGESET CONSTANT NUMBER := 8262;
+   C_JENKINS_JOBNM CONSTANT VARCHAR2(255 Char) := 'NULL';
+   C_JENKINS_BUILD CONSTANT NUMBER := 6;
+   C_JENKINS_BLDID CONSTANT VARCHAR2(255 Char) := 'NULL';
    
    C_PREREQUISITES CONSTANT MDSYS.SDO_STRING2_ARRAY := MDSYS.SDO_STRING2_ARRAY(
    );
@@ -4918,6 +5039,7 @@ END dz_gml_test;
 /
 
 GRANT EXECUTE ON dz_gml_test TO public;
+
 
 --*************************--
 PROMPT DZ_GML_TEST.pkb;
@@ -4992,6 +5114,8 @@ AS
 
 END dz_gml_test;
 /
+
+
 --*************************--
 PROMPT sqlplus_footer.sql;
 
