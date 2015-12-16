@@ -168,4 +168,3 @@ END dz_gml_util;
 
 GRANT EXECUTE ON dz_gml_util TO PUBLIC;
 
-
