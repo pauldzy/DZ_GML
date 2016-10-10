@@ -7,7 +7,7 @@ AS
    header: DZ_GML
      
    - Build ID: DZBUILDIDDZ
-   - TFS Change Set: DZCHANGESETDZ
+   - Change Set: DZCHANGESETDZ
    
    Utilities for the exchange of geometries between Oracle Spatial and OGC
    GML 3.x formats.
