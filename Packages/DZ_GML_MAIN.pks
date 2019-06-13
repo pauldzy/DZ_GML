@@ -6,8 +6,8 @@ AS
    /*
    header: DZ_GML
      
-   - Build ID: DZBUILDIDDZ
-   - Change Set: DZCHANGESETDZ
+   - Release: %GITRELEASE%
+   - Commit Date: %GITCOMMITDATE%
    
    Utilities for the exchange of geometries between Oracle Spatial and OGC
    GML 3.x formats.

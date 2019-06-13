@@ -1,15 +1,9 @@
-
---*************************--
-PROMPT sqlplus_header.sql;
-
 WHENEVER SQLERROR EXIT -99;
 WHENEVER OSERROR  EXIT -98;
 SET DEFINE OFF;
 
-
-
---*************************--
-PROMPT DZ_GML_ORDS_VRY.tps;
+--******************************--
+PROMPT Collections/DZ_GML_ORDS_VRY.tps 
 
 CREATE OR REPLACE TYPE dz_gml_ords_vry FORCE
 AS 
@@ -18,9 +12,8 @@ VARRAY(1048576) OF MDSYS.SDO_ORDINATE_ARRAY;
 
 GRANT EXECUTE ON dz_gml_ords_vry TO PUBLIC;
 
-
---*************************--
-PROMPT DZ_GML_UTIL.pks;
+--******************************--
+PROMPT Packages/DZ_GML_UTIL.pks 
 
 CREATE OR REPLACE PACKAGE dz_gml_util
 AUTHID CURRENT_USER
@@ -192,9 +185,8 @@ END dz_gml_util;
 
 GRANT EXECUTE ON dz_gml_util TO PUBLIC;
 
-
---*************************--
-PROMPT DZ_GML_UTIL.pkb;
+--******************************--
+PROMPT Packages/DZ_GML_UTIL.pkb 
 
 CREATE OR REPLACE PACKAGE BODY dz_gml_util
 AS
@@ -1542,9 +1534,8 @@ AS
 END dz_gml_util;
 /
 
-
---*************************--
-PROMPT DZ_GML_MAIN.pks;
+--******************************--
+PROMPT Packages/DZ_GML_MAIN.pks 
 
 CREATE OR REPLACE PACKAGE dz_gml_main
 AUTHID CURRENT_USER
@@ -1554,8 +1545,8 @@ AS
    /*
    header: DZ_GML
      
-   - Build ID: 6
-   - TFS Change Set: 8262
+   - Release: 
+   - Commit Date: Mon Oct 10 16:40:29 2016 -0400
    
    Utilities for the exchange of geometries between Oracle Spatial and OGC
    GML 3.x formats.
@@ -1915,9 +1906,8 @@ END dz_gml_main;
 
 GRANT EXECUTE ON dz_gml_main TO PUBLIC;
 
-
---*************************--
-PROMPT DZ_GML_MAIN.pkb;
+--******************************--
+PROMPT Packages/DZ_GML_MAIN.pkb 
 
 CREATE OR REPLACE PACKAGE BODY dz_gml_main
 AS
@@ -4999,18 +4989,17 @@ AS
 END dz_gml_main;
 /
 
-
---*************************--
-PROMPT DZ_GML_TEST.pks;
+--******************************--
+PROMPT Packages/DZ_GML_TEST.pks 
 
 CREATE OR REPLACE PACKAGE dz_gml_test
 AUTHID CURRENT_USER
 AS
 
-   C_TFS_CHANGESET CONSTANT NUMBER := 8262;
-   C_JENKINS_JOBNM CONSTANT VARCHAR2(255 Char) := 'NULL';
-   C_JENKINS_BUILD CONSTANT NUMBER := 6;
-   C_JENKINS_BLDID CONSTANT VARCHAR2(255 Char) := 'NULL';
+   C_GITRELEASE    CONSTANT VARCHAR2(255 Char) := '';
+   C_GITCOMMIT     CONSTANT VARCHAR2(255 Char) := 'e471ce215ae5b73307ac68c784f103382ddcc631';
+   C_GITCOMMITDATE CONSTANT VARCHAR2(255 Char) := 'Mon Oct 10 16:40:29 2016 -0400';
+   C_GITCOMMITAUTH CONSTANT VARCHAR2(255 Char) := 'Paul Dziemiela';
    
    C_PREREQUISITES CONSTANT MDSYS.SDO_STRING2_ARRAY := MDSYS.SDO_STRING2_ARRAY(
    );
@@ -5040,9 +5029,8 @@ END dz_gml_test;
 
 GRANT EXECUTE ON dz_gml_test TO public;
 
-
---*************************--
-PROMPT DZ_GML_TEST.pkb;
+--******************************--
+PROMPT Packages/DZ_GML_TEST.pkb 
 
 CREATE OR REPLACE PACKAGE BODY dz_gml_test
 AS
@@ -5085,10 +5073,12 @@ AS
    RETURN VARCHAR2
    AS
    BEGIN
-      RETURN '{"TFS":' || C_TFS_CHANGESET || ','
-      || '"JOBN":"' || C_JENKINS_JOBNM || '",'   
-      || '"BUILD":' || C_JENKINS_BUILD || ','
-      || '"BUILDID":"' || C_JENKINS_BLDID || '"}';
+      RETURN '{'
+      || ' "GITRELEASE":"'    || C_GITRELEASE    || '"'
+      || ',"GITCOMMIT":"'     || C_GITCOMMIT     || '"'
+      || ',"GITCOMMITDATE":"' || C_GITCOMMITDATE || '"'
+      || ',"GITCOMMITAUTH":"' || C_GITCOMMITAUTH || '"'
+      || '}';
       
    END version;
    
@@ -5114,11 +5104,6 @@ AS
 
 END dz_gml_test;
 /
-
-
---*************************--
-PROMPT sqlplus_footer.sql;
-
 
 SHOW ERROR;
 
@@ -5153,4 +5138,5 @@ END;
 /
 
 EXIT;
+SET DEFINE OFF;
 
